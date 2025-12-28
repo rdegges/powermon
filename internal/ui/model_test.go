@@ -280,6 +280,47 @@ func TestModel_View(t *testing.T) {
 		}
 	})
 
+	t.Run("handles single reading without panic", func(t *testing.T) {
+		mock := power.NewMockMonitor()
+		m := NewModel(DefaultConfig(mock))
+		m.ready = true
+
+		// Add only one reading
+		now := time.Now()
+		m.history.Add(power.Reading{Watts: 15.0, Timestamp: now})
+		m.lastReading = power.Reading{Watts: 15.0, Timestamp: now}
+
+		// This should not panic
+		view := m.View()
+
+		if view == "" {
+			t.Error("expected non-empty view")
+		}
+	})
+
+	t.Run("handles narrow graph width without panic", func(t *testing.T) {
+		mock := power.NewMockMonitor()
+		m := NewModel(DefaultConfig(mock))
+		m.ready = true
+		m.graphWidth = 1 // Very narrow
+
+		now := time.Now()
+		for i := 0; i < 10; i++ {
+			m.history.Add(power.Reading{
+				Watts:     float64(10 + i),
+				Timestamp: now.Add(time.Duration(i) * time.Second),
+			})
+		}
+		m.lastReading = power.Reading{Watts: 19.0, Timestamp: now.Add(9 * time.Second)}
+
+		// This should not panic even with graphWidth=1
+		view := m.View()
+
+		if view == "" {
+			t.Error("expected non-empty view")
+		}
+	})
+
 	t.Run("shows statistics", func(t *testing.T) {
 		mock := power.NewMockMonitor()
 		m := NewModel(DefaultConfig(mock))

@@ -377,10 +377,16 @@ func (m Model) renderGraph() string {
 
 	// Sample readings to fit graph width
 	numPoints := min(m.graphWidth, len(readings))
+	if numPoints < 1 {
+		numPoints = 1
+	}
 	sampledReadings := make([]float64, numPoints)
 
-	if numPoints < len(readings) {
-		// Sample evenly
+	if numPoints == 1 {
+		// Single point: use the latest reading
+		sampledReadings[0] = readings[len(readings)-1].Watts
+	} else if numPoints < len(readings) {
+		// Sample evenly across all readings
 		for i := 0; i < numPoints; i++ {
 			idx := i * (len(readings) - 1) / (numPoints - 1)
 			sampledReadings[i] = readings[idx].Watts
