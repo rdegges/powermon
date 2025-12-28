@@ -25,6 +25,32 @@ A cross-platform CLI application that displays real-time power consumption with 
 brew install rdegges/tap/powermon
 ```
 
+### Debian/Ubuntu (.deb)
+
+```bash
+# Download the latest .deb package (replace VERSION and ARCH as needed)
+wget https://github.com/rdegges/powermon/releases/latest/download/powermon_VERSION_linux_amd64.deb
+
+# Install
+sudo dpkg -i powermon_VERSION_linux_amd64.deb
+
+# Or install with apt (handles dependencies automatically)
+sudo apt install ./powermon_VERSION_linux_amd64.deb
+```
+
+### Fedora/RHEL/CentOS (.rpm)
+
+```bash
+# Download the latest .rpm package (replace VERSION and ARCH as needed)
+wget https://github.com/rdegges/powermon/releases/latest/download/powermon_VERSION_linux_amd64.rpm
+
+# Install with dnf (Fedora/RHEL 8+)
+sudo dnf install ./powermon_VERSION_linux_amd64.rpm
+
+# Or install with yum (older RHEL/CentOS)
+sudo yum localinstall ./powermon_VERSION_linux_amd64.rpm
+```
+
 ### Download Binary
 
 Pre-built binaries are available for macOS, Linux, and Windows on the [Releases](https://github.com/rdegges/powermon/releases) page.
