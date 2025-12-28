@@ -19,6 +19,22 @@ A cross-platform CLI application that displays real-time power consumption with 
 
 ## Installation
 
+### Homebrew (macOS & Linux)
+
+```bash
+brew install rdegges/tap/powermon
+```
+
+### Download Binary
+
+Pre-built binaries are available for macOS, Linux, and Windows on the [Releases](https://github.com/rdegges/powermon/releases) page.
+
+### Using Go Install
+
+```bash
+go install github.com/rdegges/powermon/cmd/powermon@latest
+```
+
 ### From Source
 
 ```bash
@@ -27,16 +43,10 @@ git clone https://github.com/rdegges/powermon.git
 cd powermon
 
 # Build
-go build -o powermon ./cmd/powermon
+make build
 
 # Run
 ./powermon
-```
-
-### Using Go Install
-
-```bash
-go install github.com/rdegges/powermon/cmd/powermon@latest
 ```
 
 ## Usage
