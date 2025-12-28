@@ -71,11 +71,19 @@ brews:
     repository:
       owner: rdegges
       name: homebrew-tap
+      # Use a personal access token with repo scope
+      # Set as HOMEBREW_TAP_GITHUB_TOKEN secret in your repo
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     commit_author:
       name: goreleaserbot
       email: bot@goreleaser.com
+    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
+    directory: Formula
     homepage: https://github.com/rdegges/powermon
     description: Cross-platform power consumption monitor with interactive terminal UI
     license: MIT
-    skip_upload: auto
+    install: |
+      bin.install "powermon"
+    test: |
+      system "#{bin}/powermon", "-version"
 
