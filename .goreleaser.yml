@@ -44,6 +44,25 @@ archives:
       - README.md
       - LICENSE
 
+nfpms:
+  - id: powermon
+    package_name: powermon
+    file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    vendor: Randall Degges
+    homepage: https://github.com/rdegges/powermon
+    maintainer: Randall Degges <r@rdegges.com>
+    description: Cross-platform power consumption monitor with interactive terminal UI
+    license: MIT
+    formats:
+      - deb
+      - rpm
+    bindir: /usr/bin
+    contents:
+      - src: ./LICENSE
+        dst: /usr/share/licenses/powermon/LICENSE
+      - src: ./README.md
+        dst: /usr/share/doc/powermon/README.md
+
 checksum:
   name_template: 'checksums.txt'
 
