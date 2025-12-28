@@ -6,7 +6,7 @@
 
 A cross-platform CLI application that displays real-time power consumption with a fancy, interactive terminal UI.
 
-![Power Monitor GIF](https://via.placeholder.com/600x400/1a1a2e/7D56F4?text=Power+Monitor)
+![Power Monitor GIF](xxx)
 
 ## Features
 
