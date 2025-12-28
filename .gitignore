@@ -1,0 +1,33 @@
+# Binaries
+powermon
+powermon-*
+*.exe
+
+# Test binaries
+*.test
+
+# Output of go coverage
+*.out
+coverage.html
+
+# Go workspace
+go.work
+go.work.sum
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp files
+/tmp/
+
+# GoReleaser
+dist/
+
