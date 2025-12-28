@@ -45,7 +45,6 @@ archives:
     files:
       - README.md
       - LICENSE
-    rlcp: true
 
 checksum:
   name_template: 'checksums.txt'
@@ -71,24 +70,31 @@ release:
   prerelease: auto
   name_template: "{{.ProjectName}} v{{.Version}}"
 
-homebrew:
+homebrew_casks:
   - name: powermon
+    # Binary to install
+    binaries:
+      - powermon
+    # Tap repository configuration
     repository:
       owner: rdegges
       name: homebrew-tap
-      # Use a personal access token with repo scope
-      # Set as HOMEBREW_TAP_GITHUB_TOKEN secret in your repo
+      branch: main
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     commit_author:
       name: goreleaserbot
       email: bot@goreleaser.com
-    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
-    directory: Formula
+    commit_msg_template: "Brew cask update for {{ .ProjectName }} version {{ .Tag }}"
+    directory: Casks
     homepage: https://github.com/rdegges/powermon
     description: Cross-platform power consumption monitor with interactive terminal UI
-    license: MIT
-    install: |
-      bin.install "powermon"
-    test: |
-      system "#{bin}/powermon", "-version"
-
+    caveats: |
+      To run powermon on desktop Macs (Mac mini, iMac, Mac Studio, Mac Pro),
+      use sudo for power monitoring: sudo powermon
+    # Remove quarantine attribute for unsigned binary
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/powermon"]
+          end
