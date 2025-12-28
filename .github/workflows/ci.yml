@@ -63,8 +63,13 @@ jobs:
       - name: Build
         run: go build -v ./...
 
-      - name: Build binary
-        run: go build -o powermon${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./cmd/powermon
+      - name: Build binary (Unix)
+        if: runner.os != 'Windows'
+        run: go build -o powermon ./cmd/powermon
+
+      - name: Build binary (Windows)
+        if: runner.os == 'Windows'
+        run: go build -o powermon.exe ./cmd/powermon
 
   lint:
     name: Lint

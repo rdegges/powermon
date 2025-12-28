@@ -1,6 +1,6 @@
-# Binaries
-powermon
-powermon-*
+# Binaries (only in root, not cmd/powermon/)
+/powermon
+/powermon-*
 *.exe
 
 # Test binaries
