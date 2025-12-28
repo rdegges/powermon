@@ -1,0 +1,58 @@
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+linters:
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - gofmt
+    - goimports
+    - misspell
+    - unconvert
+    - unparam
+    - gocritic
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+  govet:
+    enable-all: true
+    disable:
+      - fieldalignment
+  goimports:
+    local-prefixes: github.com/rdegges/powermon
+  misspell:
+    locale: US
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - style
+      - performance
+
+issues:
+  exclude-rules:
+    # Exclude some linters from running on tests files
+    - path: _test\.go
+      linters:
+        - errcheck
+        - gocritic
+        - unparam
+    # Exclude shadow checking on err
+    - text: 'shadow: declaration of "err"'
+      linters:
+        - govet
+    # Bubble Tea models are passed by value (this is the expected pattern)
+    - text: 'hugeParam'
+      linters:
+        - gocritic
+    # Allow if-else chains for readability in some cases
+    - text: 'ifElseChain'
+      linters:
+        - gocritic
+
