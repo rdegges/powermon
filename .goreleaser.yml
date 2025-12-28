@@ -29,8 +29,6 @@ builds:
 
 archives:
   - id: default
-    builds:
-      - powermon
     name_template: >-
       {{ .ProjectName }}_
       {{- .Version }}_
