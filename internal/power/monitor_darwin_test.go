@@ -201,6 +201,56 @@ ANE Power: 500 mW`,
 	}
 }
 
+func TestDarwinMonitor_ParseWattsFromIoreg(t *testing.T) {
+	m := NewDarwinMonitor()
+
+	tests := []struct {
+		name     string
+		input    string
+		expected float64
+	}{
+		{
+			name: "system power in",
+			input: `"PowerTelemetryData" = {"SystemPowerIn"=12345,"SystemLoad"=9999}`,
+			expected: 12.345,
+		},
+		{
+			name: "system load",
+			input: `"PowerTelemetryData" = {"SystemPowerIn"=0,"SystemLoad"=9651}`,
+			expected: 9.651,
+		},
+		{
+			name: "system current and voltage",
+			input: `"PowerTelemetryData" = {"SystemCurrentIn"=532,"SystemVoltageIn"=19839}`,
+			expected: 10.554,
+		},
+		{
+			name: "battery power negative",
+			input: `"PowerTelemetryData" = {"BatteryPower"=18446744073709541965}`,
+			expected: 9.651,
+		},
+		{
+			name: "fallback amperage voltage",
+			input: `"InstantAmperage" = 2000
+ "Voltage" = 11000`,
+			expected: 22.0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := m.parseWattsFromIoreg(tt.input)
+			diff := got - tt.expected
+			if diff < 0 {
+				diff = -diff
+			}
+			if diff > 0.001 {
+				t.Errorf("parseWattsFromIoreg() = %f, want %f", got, tt.expected)
+			}
+		})
+	}
+}
+
 func TestDarwinMonitor_HasBattery(t *testing.T) {
 	m := NewDarwinMonitor()
 	// Just verify the method exists and returns a bool

@@ -5,6 +5,7 @@ package power
 import (
 	"bytes"
 	"context"
+	"math"
 	"os"
 	"os/exec"
 	"regexp"
@@ -27,6 +28,12 @@ var (
 	anePowerRe      = regexp.MustCompile(`ANE Power:\s*([\d.]+)\s*mW`)
 	combinedPowerRe = regexp.MustCompile(`Combined Power.*?:\s*([\d.]+)\s*mW`)
 	packagePowerRe  = regexp.MustCompile(`Package Power:\s*([\d.]+)\s*mW`)
+	// Power telemetry (system load / input power) from ioreg
+	systemPowerInRe = regexp.MustCompile(`"SystemPowerIn"\s*=\s*(\d+)`)
+	systemLoadRe    = regexp.MustCompile(`"SystemLoad"\s*=\s*(\d+)`)
+	systemCurrentInRe = regexp.MustCompile(`"SystemCurrentIn"\s*=\s*(\d+)`)
+	systemVoltageInRe = regexp.MustCompile(`"SystemVoltageIn"\s*=\s*(\d+)`)
+	batteryPowerRe  = regexp.MustCompile(`"BatteryPower"\s*=\s*(\d+)`)
 )
 
 // DarwinMonitor reads power information on macOS using system utilities.
@@ -258,6 +265,10 @@ func (m *DarwinMonitor) runIoreg(ctx context.Context) (string, error) {
 
 // parseWattsFromIoreg parses power consumption from ioreg output.
 func (m *DarwinMonitor) parseWattsFromIoreg(output string) float64 {
+	if watts := m.parseTelemetryWattsFromIoreg(output); watts > 0 {
+		return watts
+	}
+
 	// Look for InstantAmperage and Voltage to calculate watts
 	// Watts = Voltage * Amperage
 	var voltage, amperage float64
@@ -265,10 +276,8 @@ func (m *DarwinMonitor) parseWattsFromIoreg(output string) float64 {
 	// InstantAmperage - stored as unsigned but represents signed value
 	// When discharging, it's a large positive number that's actually negative
 	if matches := instantAmperageRe.FindStringSubmatch(output); len(matches) >= 2 {
-		if v, err := strconv.ParseUint(matches[1], 10, 64); err == nil {
-			// Convert unsigned to signed (two's complement)
-			signedVal := int64(v)
-			amperage = float64(signedVal) / 1000.0 // Convert mA to A
+		if v, ok := parseIoregSigned(matches[1]); ok {
+			amperage = float64(v) / 1000.0 // Convert mA to A
 		}
 	}
 
@@ -289,6 +298,82 @@ func (m *DarwinMonitor) parseWattsFromIoreg(output string) float64 {
 	}
 
 	return 0
+}
+
+func (m *DarwinMonitor) parseTelemetryWattsFromIoreg(output string) float64 {
+	// Prefer adapter input power when available (AC power).
+	if matches := systemPowerInRe.FindStringSubmatch(output); len(matches) >= 2 {
+		if v, ok := parseIoregSigned(matches[1]); ok {
+			if v != 0 {
+				return math.Abs(float64(v)) / 1000.0
+			}
+		}
+	}
+
+	// Fall back to system load (total consumption), available on many Macs.
+	if matches := systemLoadRe.FindStringSubmatch(output); len(matches) >= 2 {
+		if v, ok := parseIoregSigned(matches[1]); ok {
+			if v != 0 {
+				return math.Abs(float64(v)) / 1000.0
+			}
+		}
+	}
+
+	// If we have current and voltage in, calculate power.
+	if watts := calculateInputPower(output); watts > 0 {
+		return watts
+	}
+
+	// Last resort: battery power (may be negative when discharging).
+	if matches := batteryPowerRe.FindStringSubmatch(output); len(matches) >= 2 {
+		if v, ok := parseIoregSigned(matches[1]); ok {
+			if v != 0 {
+				return math.Abs(float64(v)) / 1000.0
+			}
+		}
+	}
+
+	return 0
+}
+
+func calculateInputPower(output string) float64 {
+	matchesCurrent := systemCurrentInRe.FindStringSubmatch(output)
+	matchesVoltage := systemVoltageInRe.FindStringSubmatch(output)
+	if len(matchesCurrent) < 2 || len(matchesVoltage) < 2 {
+		return 0
+	}
+
+	current, ok := parseIoregSigned(matchesCurrent[1])
+	if !ok {
+		return 0
+	}
+
+	voltage, ok := parseIoregSigned(matchesVoltage[1])
+	if !ok {
+		return 0
+	}
+
+	if current == 0 || voltage == 0 {
+		return 0
+	}
+
+	// mA * mV = microwatts, convert to watts.
+	watts := (float64(current) * float64(voltage)) / 1_000_000.0
+	return math.Abs(watts)
+}
+
+func parseIoregSigned(value string) (int64, bool) {
+	v, err := strconv.ParseUint(value, 10, 64)
+	if err != nil {
+		return 0, false
+	}
+
+	// If the value looks like a 32-bit two's complement, handle that explicitly.
+	if v > math.MaxInt32 && v <= math.MaxUint32 {
+		return int64(int32(v)), true
+	}
+
+	return int64(v), true
 }
 
 // estimateWattsFromIoreg estimates power consumption from ioreg battery data.
@@ -312,10 +397,8 @@ func (m *DarwinMonitor) estimateWattsFromIoreg(output string) float64 {
 
 	// Amperage - stored as unsigned but represents signed value
 	if matches := amperageRe.FindStringSubmatch(output); len(matches) >= 2 {
-		if v, err := strconv.ParseUint(matches[1], 10, 64); err == nil {
-			// Convert unsigned to signed (two's complement)
-			signedVal := int64(v)
-			amperage = float64(signedVal) / 1000.0 // Convert mA to A
+		if v, ok := parseIoregSigned(matches[1]); ok {
+			amperage = float64(v) / 1000.0 // Convert mA to A
 		}
 	}
 
